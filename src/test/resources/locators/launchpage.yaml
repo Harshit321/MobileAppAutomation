@@ -1,0 +1,13 @@
+defaultClient: android
+locators:
+  joiningLinkTextBox:
+    android:
+      strategy: id
+      value: edt_meeting_url
+    ios:
+      strategy: id
+      value: edt_meeting_url
+  joinNowBtn:
+    android:
+      strategy: id
+      value: btn_join_now
