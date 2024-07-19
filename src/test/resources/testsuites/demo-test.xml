@@ -1,0 +1,18 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="100ms TestSuite" parallel="tests">
+    <listeners>
+        <listener class-name="org.sample.listeners.AppiumListener"/>
+    </listeners>
+    <test name="100ms Test Device 1">
+        <parameter name="devices" value="emulator-5554"/>
+        <classes>
+            <class name="org.sample.app.tests.homepage.HomePageTest"/>
+        </classes>
+    </test>
+    <!--    <test name="100ms Test Device 2">-->
+    <!--        <parameter name="devices" value="emulator-5556"/>-->
+    <!--        <classes>-->
+    <!--            <class name="org.sample.app.tests.homepage.HomePageTest"/>-->
+    <!--        </classes>-->
+    <!--    </test>-->
+</suite>
