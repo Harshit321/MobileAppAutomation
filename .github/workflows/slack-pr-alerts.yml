@@ -1,4 +1,4 @@
-name: PR Alerts to Slack
+name: PR Slack Notifications
 
 on:
   pull_request:
@@ -7,39 +7,57 @@ on:
     types: [submitted]
 
 jobs:
-  slack_notification:
+  notify-slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Send PR Opened Notification
+      - name: Send PR Created Notification
         if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "channel": "test-pr-notify",
-              "attachments": [
+              "blocks": [
                 {
-                  "color": "#2eb886",
-                  "blocks": [
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🆕 New Pull Request Created!"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Repository:* `${{ github.repository }}`\n*Author:* `${{ github.event.pull_request.user.login }}`\n*Reviewers:* <@userID1> <@userID2>"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ github.event.pull_request.user.avatar_url }}",
+                    "alt_text": "Author Avatar"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Description:* \n${{ github.event.pull_request.body || 'No description provided.' }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
                     {
-                      "type": "section",
+                      "type": "button",
                       "text": {
-                        "type": "mrkdwn",
-                        "text": "*🆕 New PR* \n\n🟢 *PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n📂 *Repository:* `${{ github.repository }}`\n👤 *Author:* `${{ github.event.pull_request.user.login }}`\n🤔 *Reviewer:* <@userID1> <@userID2>"
-                      }
-                    },
-                    {
-                      "type": "actions",
-                      "elements": [
-                        {
-                          "type": "button",
-                          "text": {
-                            "type": "plain_text",
-                            "text": "🔗 Open PR"
-                          },
-                          "url": "${{ github.event.pull_request.html_url }}"
-                        }
-                      ]
+                        "type": "plain_text",
+                        "text": "🔗 View Pull Request"
+                      },
+                      "url": "${{ github.event.pull_request.html_url }}",
+                      "style": "primary"
                     }
                   ]
                 }
@@ -49,22 +67,43 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send PR Reviewed Notification
-        if: github.event_name == 'pull_request_review' && github.event.review.state == 'commented'
+        if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "channel": "test-pr-notify",
-              "attachments": [
+              "blocks": [
                 {
-                  "color": "#e3b341",
-                  "blocks": [
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "📝 Pull Request Reviewed!"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Reviewer:* `${{ github.event.review.user.login }}`\n*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Review State:* `${{ github.event.review.state }}`"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ github.event.review.user.avatar_url }}",
+                    "alt_text": "Reviewer Avatar"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
                     {
-                      "type": "section",
+                      "type": "button",
                       "text": {
-                        "type": "mrkdwn",
-                        "text": "*📝 New Review Comment* \n\n*PR:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n👤 *Reviewer:* `${{ github.event.review.user.login }}`"
-                      }
+                        "type": "plain_text",
+                        "text": "🔗 View Pull Request"
+                      },
+                      "url": "${{ github.event.pull_request.html_url }}",
+                      "style": "primary"
                     }
                   ]
                 }
@@ -80,16 +119,37 @@ jobs:
           payload: |
             {
               "channel": "test-pr-notify",
-              "attachments": [
+              "blocks": [
                 {
-                  "color": "#439FE0",
-                  "blocks": [
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ Pull Request Merged!"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Merged by:* `${{ github.event.pull_request.merged_by.login }}`\n*Repository:* `${{ github.repository }}`"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ github.event.pull_request.merged_by.avatar_url }}",
+                    "alt_text": "Merger Avatar"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
                     {
-                      "type": "section",
+                      "type": "button",
                       "text": {
-                        "type": "mrkdwn",
-                        "text": "*🎉 PR Merged!* \n\n*PR:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n👤 *Merged By:* `${{ github.event.pull_request.merged_by.login }}`"
-                      }
+                        "type": "plain_text",
+                        "text": "🔗 View Pull Request"
+                      },
+                      "url": "${{ github.event.pull_request.html_url }}",
+                      "style": "primary"
                     }
                   ]
                 }
