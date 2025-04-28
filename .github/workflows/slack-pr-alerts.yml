@@ -1,0 +1,99 @@
+name: PR Alerts to Slack
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  slack_notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR Opened Notification
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-pr-notify",
+              "attachments": [
+                {
+                  "color": "#2eb886",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*🆕 New PR* \n\n🟢 *PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n📂 *Repository:* `${{ github.repository }}`\n👤 *Author:* `${{ github.event.pull_request.user.login }}`\n🤔 *Reviewer:* <@userID1> <@userID2>"
+                      }
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "🔗 Open PR"
+                          },
+                          "url": "${{ github.event.pull_request.html_url }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send PR Reviewed Notification
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'commented'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-pr-notify",
+              "attachments": [
+                {
+                  "color": "#e3b341",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*📝 New Review Comment* \n\n*PR:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n👤 *Reviewer:* `${{ github.event.review.user.login }}`"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send PR Merged Notification
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-pr-notify",
+              "attachments": [
+                {
+                  "color": "#439FE0",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*🎉 PR Merged!* \n\n*PR:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n👤 *Merged By:* `${{ github.event.pull_request.merged_by.login }}`"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
