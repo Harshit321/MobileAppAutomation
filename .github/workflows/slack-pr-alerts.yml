@@ -2,21 +2,20 @@ name: PR Slack Notifications
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, closed]
-  pull_request_review:
-    types: [submitted]
+    types: [opened, reopened, ready_for_review, review_requested, closed, edited]
 
 jobs:
-  notify-slack:
+  notify_slack:
     runs-on: ubuntu-latest
     steps:
       - name: Send PR Created Notification
-        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
+        if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "channel": "test-pr-notify",
+              "text": "🆕 New Pull Request Created!",
               "blocks": [
                 {
                   "type": "header",
@@ -29,7 +28,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Repository:* `${{ github.repository }}`\n*Author:* `${{ github.event.pull_request.user.login }}`\n*Reviewers:* <@userID1> <@userID2>"
+                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Repository:* `${{ github.repository }}`\n*Author:* `${{ github.event.pull_request.user.login }}`\n*Reviewers:* ${{ join(fromJson('["' + github.event.pull_request.requested_reviewers.*.login | join('","') + '"]'), ', ') || 'No reviewers assigned.' }}"
                   },
                   "accessory": {
                     "type": "image",
@@ -67,30 +66,26 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send PR Reviewed Notification
-        if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
+        if: github.event.action == 'edited' || github.event.action == 'review_requested'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "channel": "test-pr-notify",
+              "text": "👀 PR Updated or Review Requested!",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "📝 Pull Request Reviewed!"
+                    "text": "👀 PR Updated or Review Requested!"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Reviewer:* `${{ github.event.review.user.login }}`\n*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Review State:* `${{ github.event.review.state }}`"
-                  },
-                  "accessory": {
-                    "type": "image",
-                    "image_url": "${{ github.event.review.user.avatar_url }}",
-                    "alt_text": "Reviewer Avatar"
+                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Repository:* `${{ github.repository }}`\n*Updated by:* `${{ github.actor }}`"
                   }
                 },
                 {
@@ -100,7 +95,7 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "🔗 View Pull Request"
+                        "text": "🔍 View Pull Request"
                       },
                       "url": "${{ github.event.pull_request.html_url }}",
                       "style": "primary"
@@ -113,30 +108,26 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send PR Merged Notification
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "channel": "test-pr-notify",
+              "text": "🎉 Pull Request Merged!",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "✅ Pull Request Merged!"
+                    "text": "🎉 Pull Request Merged!"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Merged by:* `${{ github.event.pull_request.merged_by.login }}`\n*Repository:* `${{ github.repository }}`"
-                  },
-                  "accessory": {
-                    "type": "image",
-                    "image_url": "${{ github.event.pull_request.merged_by.avatar_url }}",
-                    "alt_text": "Merger Avatar"
+                    "text": "*PR Title:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*Merged by:* `${{ github.actor }}`"
                   }
                 },
                 {
@@ -146,7 +137,7 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "🔗 View Pull Request"
+                        "text": "✅ View Merged PR"
                       },
                       "url": "${{ github.event.pull_request.html_url }}",
                       "style": "primary"
