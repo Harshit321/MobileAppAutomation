@@ -1,5 +1,5 @@
 # MobileAppAutomation
-Sample Mobile App Automation Using Appium, Maven and TestNG
+Sample Mobile App Automation Using Appium, Maven, TestNG and Java
 # Pre-Requisites
 1. Java
 2. Maven 
